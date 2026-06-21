@@ -41,6 +41,97 @@ jobs:
       - name: Build Web export
         run: godot --headless -v --export-release "Web" ./build/web/index.html
 
+      - name: Version web export assets
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          export_dir = Path("build/web")
+          version = os.environ["GITHUB_SHA"][:12]
+          versioned_base = f"index-{version}"
+
+          def replace_once(text: str, old: str, new: str) -> str:
+              if old not in text:
+                  raise RuntimeError(f"Expected generated export text was not found: {old}")
+              return text.replace(old, new, 1)
+
+          for extension in ("js", "wasm", "pck"):
+              source = export_dir / f"index.{extension}"
+              if source.exists():
+                  source.rename(export_dir / f"{versioned_base}.{extension}")
+
+          html_path = export_dir / "index.html"
+          html = html_path.read_text(encoding="utf-8")
+          html = replace_once(html, 'src="index.js"', f'src="{versioned_base}.js"')
+          html = replace_once(html, '"executable":"index"', f'"executable":"{versioned_base}"')
+          html = replace_once(html, '"index.pck":', f'"{versioned_base}.pck":')
+          html = replace_once(html, '"index.wasm":', f'"{versioned_base}.wasm":')
+          html_path.write_text(html, encoding="utf-8")
+
+          service_worker_path = export_dir / "index.service.worker.js"
+          service_worker = service_worker_path.read_text(encoding="utf-8")
+          service_worker, cache_version_replacements = re.subn(
+              r"const CACHE_VERSION = '.*?';",
+              f"const CACHE_VERSION = '{version}';",
+              service_worker,
+              count=1,
+          )
+          if cache_version_replacements != 1:
+              raise RuntimeError("Expected one generated service worker CACHE_VERSION.")
+          service_worker = replace_once(service_worker, '"index.js"', f'"{versioned_base}.js"')
+          service_worker = replace_once(
+              service_worker, '"index.wasm"', f'"{versioned_base}.wasm"'
+          )
+          service_worker = replace_once(service_worker, '"index.pck"', f'"{versioned_base}.pck"')
+          service_worker = replace_once(
+              service_worker,
+              "const FULL_CACHE = CACHED_FILES.concat(CACHEABLE_FILES);",
+              "const FULL_CACHE = CACHED_FILES.concat(CACHEABLE_FILES);\nlet hadPreviousCache = false;",
+          )
+          service_worker = replace_once(
+              service_worker,
+              "self.addEventListener('install', (event) => {\n"
+              "\tevent.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CACHED_FILES)));\n"
+              "});",
+              "self.addEventListener('install', (event) => {\n"
+              "\tevent.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CACHED_FILES)).then(() => self.skipWaiting()));\n"
+              "});",
+          )
+          service_worker = replace_once(
+              service_worker,
+              "\t\tfunction (keys) {\n"
+              "\t\t\t// Remove old caches.\n"
+              "\t\t\treturn Promise.all(keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map((key) => caches.delete(key)));\n"
+              "\t\t}\n"
+              "\t).then(function () {\n"
+              "\t\t// Enable navigation preload if available.\n"
+              "\t\treturn ('navigationPreload' in self.registration) ? self.registration.navigationPreload.enable() : Promise.resolve();\n"
+              "\t}));",
+              "\t\tfunction (keys) {\n"
+              "\t\t\t// Remove old caches.\n"
+              "\t\t\tconst oldCaches = keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME);\n"
+              "\t\t\thadPreviousCache = oldCaches.length > 0;\n"
+              "\t\t\treturn Promise.all(oldCaches.map((key) => caches.delete(key)));\n"
+              "\t\t}\n"
+              "\t).then(function () {\n"
+              "\t\treturn self.clients.claim();\n"
+              "\t}).then(function () {\n"
+              "\t\t// Enable navigation preload if available.\n"
+              "\t\treturn ('navigationPreload' in self.registration) ? self.registration.navigationPreload.enable() : Promise.resolve();\n"
+              "\t}).then(function () {\n"
+              "\t\tif (!hadPreviousCache) {\n"
+              "\t\t\treturn Promise.resolve();\n"
+              "\t\t}\n"
+              "\t\treturn self.clients.matchAll({ type: 'window' }).then((clients) =>\n"
+              "\t\t\tPromise.all(clients.map((client) => client.navigate(client.url)))\n"
+              "\t\t);\n"
+              "\t}));",
+          )
+          service_worker_path.write_text(service_worker, encoding="utf-8")
+          PY
+
       - name: Disable Jekyll
         run: touch ./build/web/.nojekyll
 
