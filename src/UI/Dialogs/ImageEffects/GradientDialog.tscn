@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bn4aw27dj7pwi" path="res://src/UI/Nodes/GradientEdit.tscn" id="3"]
 [ext_resource type="Script" uid="uid://tfdhqto6j5j0" path="res://src/UI/Nodes/Sliders/ValueSlider.gd" id="4"]
 [ext_resource type="PackedScene" uid="uid://bbnqcxa20a5a5" path="res://src/UI/Nodes/Sliders/ValueSliderV2.tscn" id="5"]
+[ext_resource type="Texture2D" uid="uid://bv7ldl8obhawm" path="res://assets/graphics/misc/icon_reload.png" id="6"]
 
 [node name="GradientDialog" unique_id=1846401644 instance=ExtResource("2")]
 oversampling_override = 1.0
@@ -79,16 +80,32 @@ popup/item_2/id = 2
 popup/item_3/text = "Truncate"
 popup/item_3/id = 3
 
-[node name="SamplesLabel" type="Label" parent="VBoxContainer/ScrollContainer/GradientOptions" index="6" unique_id=1024247344 groups=["gradient_common"]]
+[node name="SamplesLabelContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/GradientOptions" index="6" unique_id=1432057297 groups=["gradient_common"]]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="SamplesLabel" type="Label" parent="VBoxContainer/ScrollContainer/GradientOptions/SamplesLabelContainer" index="0" unique_id=1024247344]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Color samples:"
+
+[node name="ResetSampleCountButton" type="TextureButton" parent="VBoxContainer/ScrollContainer/GradientOptions/SamplesLabelContainer" index="1" unique_id=403992127 groups=["UIButtons"]]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(16, 0)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Reset color samples to canvas length."
+mouse_default_cursor_shape = 2
+texture_normal = ExtResource("6")
 
 [node name="SampleCountSpinBox" type="SpinBox" parent="VBoxContainer/ScrollContainer/GradientOptions" index="7" unique_id=223291200 groups=["gradient_common"]]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "The number of color samples in the generated gradient ramp."
+tooltip_text = "Color detail and smoothness of gradient.
+(Default: Canvas length)"
 mouse_default_cursor_shape = 2
 min_value = 2.0
 max_value = 16384.0
@@ -197,6 +214,7 @@ focus_mode = 0
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/GradientOptions/ShapeOptionButton" to="." method="_on_ShapeOptionButton_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/GradientOptions/DitheringOptionButton" to="." method="_on_DitheringOptionButton_item_selected"]
 [connection signal="item_selected" from="VBoxContainer/ScrollContainer/GradientOptions/RepeatOptionButton" to="." method="_on_RepeatOptionButton_item_selected"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/GradientOptions/SamplesLabelContainer/ResetSampleCountButton" to="." method="_on_reset_sample_count_button_pressed"]
 [connection signal="value_changed" from="VBoxContainer/ScrollContainer/GradientOptions/SampleCountSpinBox" to="." method="_on_sample_count_spin_box_value_changed"]
 [connection signal="value_changed" from="VBoxContainer/ScrollContainer/GradientOptions/PositionSlider" to="." method="_value_changed"]
 [connection signal="value_changed" from="VBoxContainer/ScrollContainer/GradientOptions/SizeSlider" to="." method="_value_changed"]

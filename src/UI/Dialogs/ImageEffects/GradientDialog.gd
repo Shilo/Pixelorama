@@ -12,11 +12,14 @@ var selected_dither_matrix := ShaderLoader.dither_matrices[0]
 @onready var dithering_option_button: OptionButton = $"%DitheringOptionButton"
 @onready var repeat_option_button: OptionButton = $"%RepeatOptionButton"
 @onready var sample_count_spinbox: SpinBox = $"%SampleCountSpinBox"
+@onready var reset_sample_count_button: TextureButton = $"%ResetSampleCountButton"
 @onready var position_slider: ValueSlider = $"%PositionSlider"
 @onready var size_slider: ValueSlider = $"%SizeSlider"
 @onready var angle_slider: ValueSlider = $"%AngleSlider"
 @onready var center_slider := $"%CenterSlider" as ValueSliderV2
 @onready var radius_slider := $"%RadiusSlider" as ValueSliderV2
+
+var _initial_sample_count := 64
 
 
 func _ready() -> void:
@@ -24,6 +27,7 @@ func _ready() -> void:
 	var sm := ShaderMaterial.new()
 	sm.shader = shader
 	preview.set_material(sm)
+	reset_sample_count_button.modulate = Global.modulate_icon_color
 
 	for matrix in ShaderLoader.dither_matrices:
 		dithering_option_button.add_item(matrix.name)
@@ -39,11 +43,12 @@ func _ready() -> void:
 
 
 func _about_to_popup() -> void:
-	var project_size := Global.current_project.size
-	var default_sample_count := ceili(Vector2(project_size).length())
-	sample_count_spinbox.set_value_no_signal(
-		maxi(default_sample_count, int(sample_count_spinbox.min_value))
+	_initial_sample_count = maxi(
+		ceili(Vector2(Global.current_project.size).length()),
+		int(sample_count_spinbox.min_value)
 	)
+	sample_count_spinbox.set_value_no_signal(_initial_sample_count)
+	_update_sample_count_reset_button()
 	_update_gradient_texture_samples()
 	super._about_to_popup()
 
@@ -109,6 +114,18 @@ func _update_gradient_texture_samples() -> void:
 
 func _on_sample_count_spin_box_value_changed(_value: float) -> void:
 	_update_gradient_texture_samples()
+	_update_sample_count_reset_button()
+	update_preview()
+
+
+func _update_sample_count_reset_button() -> void:
+	reset_sample_count_button.visible = roundi(sample_count_spinbox.value) != _initial_sample_count
+
+
+func _on_reset_sample_count_button_pressed() -> void:
+	sample_count_spinbox.set_value_no_signal(_initial_sample_count)
+	_update_gradient_texture_samples()
+	_update_sample_count_reset_button()
 	update_preview()
 
 
