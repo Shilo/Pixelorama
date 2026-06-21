@@ -1,4 +1,4 @@
-name: Development Web build
+name: Web build artifact
 
 on:
   workflow_dispatch:
@@ -12,8 +12,30 @@ env:
   EXPORT_NAME: Pixelorama
 
 jobs:
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: Scony/godot-gdscript-toolkit@master
+
+      - name: Formatting checks
+        run: gdformat --diff .
+
+      - name: Linting checks
+        run: gdlint .
+
+      - name: Spell checks via codespell
+        uses: codespell-project/actions-codespell@v2
+        with:
+          skip: ./addons,./Translations,./installer,./src/UI/Dialogs/AboutDialog.gd,./src/Classes/SoftwareParsers/PhotoshopParser.gd
+          ignore_words_list: chello,doubleclick,Manuel,SectionIn
+
   export-web:
     name: Web Export 🌐
+    needs: static-checks
     runs-on: ubuntu-latest
     container:
       image: docker://barichello/godot-ci:4.6.3
@@ -31,13 +53,13 @@ jobs:
         run: godot --headless -v --import
       - name: Web Build 🔧
         run: godot --headless -v --export-release "Web" ./build/web/index.html
-      - name: Install rsync 📚
-        run: |
-          apt-get update && apt-get install -y rsync
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+
+      - name: Disable Jekyll
+        run: touch ./build/web/.nojekyll
+
+      - name: Upload Web build artifact
+        uses: actions/upload-artifact@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          single-commit: true
-          folder: build/web # The folder the action should deploy.
-          target-folder: early_access
+          name: web-build
+          path: ./build/web
+          retention-days: 14
