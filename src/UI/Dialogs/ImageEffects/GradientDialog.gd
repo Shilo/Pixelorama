@@ -43,9 +43,12 @@ func _ready() -> void:
 
 
 func _about_to_popup() -> void:
-	_initial_sample_count = maxi(
-		ceili(Vector2(Global.current_project.size).length()),
-		int(sample_count_spinbox.min_value)
+	_initial_sample_count = mini(
+		maxi(
+			ceili(Vector2(Global.current_project.size).length()),
+			int(sample_count_spinbox.min_value)
+		),
+		int(sample_count_spinbox.max_value)
 	)
 	sample_count_spinbox.set_value_no_signal(_initial_sample_count)
 	_update_sample_count_reset_button()
