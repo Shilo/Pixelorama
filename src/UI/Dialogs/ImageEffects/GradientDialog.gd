@@ -11,6 +11,7 @@ var selected_dither_matrix := ShaderLoader.dither_matrices[0]
 @onready var shape_option_button: OptionButton = $"%ShapeOptionButton"
 @onready var dithering_option_button: OptionButton = $"%DitheringOptionButton"
 @onready var repeat_option_button: OptionButton = $"%RepeatOptionButton"
+@onready var sample_count_spinbox: SpinBox = $"%SampleCountSpinBox"
 @onready var position_slider: ValueSlider = $"%PositionSlider"
 @onready var size_slider: ValueSlider = $"%SizeSlider"
 @onready var angle_slider: ValueSlider = $"%AngleSlider"
@@ -37,12 +38,18 @@ func _ready() -> void:
 	animate_panel.add_float_property("Radius Y", radius_slider.get_sliders()[1])
 
 
+func _about_to_popup() -> void:
+	var project_size := Global.current_project.size
+	var default_sample_count := ceili(Vector2(project_size).length())
+	sample_count_spinbox.set_value_no_signal(
+		maxi(default_sample_count, int(sample_count_spinbox.min_value))
+	)
+	_update_gradient_texture_samples()
+	super._about_to_popup()
+
+
 func commit_action(cel: Image, project := Global.current_project) -> void:
-	## Shilo: Fix "Effects > Procedural > Gradient" low-resolution color sampling.
-	## Match gradient texture samples to the canvas size instead of relying
-	## on Godot's default low-resolution GradientTexture2D size.
-	gradient_edit.texture.width = maxi(project.size.x, 2)
-	gradient_edit.texture.height = maxi(project.size.y, 2)
+	_update_gradient_texture_samples()
 
 	var selection_tex: ImageTexture
 	if selection_checkbox.button_pressed and project.has_selection:
@@ -92,6 +99,16 @@ func _on_ShapeOptionButton_item_selected(index: int) -> void:
 			get_tree().set_group("gradient_linear", "visible", true)
 		RADIAL:
 			get_tree().set_group("gradient_radial", "visible", true)
+	update_preview()
+
+
+func _update_gradient_texture_samples() -> void:
+	gradient_edit.texture.width = maxi(roundi(sample_count_spinbox.value), 2)
+	gradient_edit.texture.height = 2
+
+
+func _on_sample_count_spin_box_value_changed(_value: float) -> void:
+	_update_gradient_texture_samples()
 	update_preview()
 
 
