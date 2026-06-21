@@ -38,13 +38,15 @@ jobs:
         continue-on-error: true
         run: godot --headless -v --import
 
-      - name: Build Web export
+      - name: Build non-PWA Web export
         run: |
           set -eu
 
           version="$(printf '%.12s' "${GITHUB_SHA:?}")"
           versioned_base="index-${version}"
 
+          # The normal Web preset remains PWA-enabled for release exports. GitHub Pages
+          # previews are non-PWA so Godot's service worker cannot serve stale builds.
           sed -i 's#progressive_web_app/enabled=true#progressive_web_app/enabled=false#' export_presets.cfg
           godot --headless -v --export-release "Web" "./build/web/${versioned_base}.html"
           mv "./build/web/${versioned_base}.html" ./build/web/index.html
