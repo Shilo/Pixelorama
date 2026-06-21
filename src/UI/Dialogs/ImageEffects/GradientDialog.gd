@@ -5,6 +5,7 @@ enum Animate { POSITION, SIZE, ANGLE, CENTER_X, CENTER_Y, RADIUS_X, RADIUS_Y }
 
 var shader := preload("res://src/Shaders/Effects/Gradient.gdshader")
 var selected_dither_matrix := ShaderLoader.dither_matrices[0]
+var _initial_sample_count := 64
 
 @onready var options_cont: Container = $VBoxContainer/ScrollContainer/GradientOptions
 @onready var gradient_edit: GradientEditNode = $VBoxContainer/GradientEdit
@@ -18,8 +19,6 @@ var selected_dither_matrix := ShaderLoader.dither_matrices[0]
 @onready var angle_slider: ValueSlider = $"%AngleSlider"
 @onready var center_slider := $"%CenterSlider" as ValueSliderV2
 @onready var radius_slider := $"%RadiusSlider" as ValueSliderV2
-
-var _initial_sample_count := 64
 
 
 func _ready() -> void:

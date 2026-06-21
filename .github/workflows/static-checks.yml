@@ -1,4 +1,4 @@
-name: Static Checks 📊
+name: Static Checks
 on:
   push:
     branches-ignore:
@@ -19,7 +19,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - uses: Scony/godot-gdscript-toolkit@master
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install GDScript toolkit
+        run: |
+          python -m pip install --upgrade setuptools
+          python -m pip install "gdtoolkit==4.*"
       - name: Formatting checks
         run: gdformat --diff .
       - name: Linting checks
