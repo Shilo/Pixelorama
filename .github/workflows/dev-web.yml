@@ -1,4 +1,4 @@
-name: Web build artifact
+name: Development Web build
 
 on:
   workflow_dispatch:
