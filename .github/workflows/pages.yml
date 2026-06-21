@@ -48,6 +48,7 @@ jobs:
           # The normal Web preset remains PWA-enabled for release exports. GitHub Pages
           # previews are non-PWA so Godot's service worker cannot serve stale builds.
           sed -i 's#progressive_web_app/enabled=true#progressive_web_app/enabled=false#' export_presets.cfg
+          grep -q 'progressive_web_app/enabled=false' export_presets.cfg
           godot --headless -v --export-release "Web" "./build/web/${versioned_base}.html"
           mv "./build/web/${versioned_base}.html" ./build/web/index.html
 
@@ -55,6 +56,7 @@ jobs:
           test -f "./build/web/${versioned_base}.wasm"
           test -f "./build/web/${versioned_base}.pck"
           grep -q "\"executable\":\"${versioned_base}\"" ./build/web/index.html
+          ! grep -q '"serviceWorker":"index.service.worker.js"' ./build/web/index.html
 
       - name: Clear legacy web caches
         run: |
