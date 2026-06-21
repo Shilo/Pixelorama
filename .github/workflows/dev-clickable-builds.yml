@@ -1,6 +1,7 @@
 name: "dev-clickable-builds"
 on:
-  workflow_dispatch:
+  push:
+    branches: [ master ]
 
 env:
   GODOT_VERSION: 3.5
