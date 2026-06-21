@@ -38,6 +38,12 @@ func _ready() -> void:
 
 
 func commit_action(cel: Image, project := Global.current_project) -> void:
+	## Shilo: Fix "Effects > Procedural > Gradient" low-resolution color sampling.
+	## Match gradient texture samples to the canvas size instead of relying
+	## on Godot's default low-resolution GradientTexture2D size.
+	gradient_edit.texture.width = maxi(project.size.x, 2)
+	gradient_edit.texture.height = maxi(project.size.y, 2)
+
 	var selection_tex: ImageTexture
 	if selection_checkbox.button_pressed and project.has_selection:
 		var selection := project.selection_map.return_cropped_copy(project, project.size)
