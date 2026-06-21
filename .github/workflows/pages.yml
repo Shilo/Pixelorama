@@ -42,7 +42,7 @@ jobs:
         run: |
           set -eu
 
-          version="$(git rev-parse --short=12 HEAD)"
+          version="$(printf '%.12s' "${GITHUB_SHA:?}")"
           versioned_base="index-${version}"
 
           sed -i 's#progressive_web_app/enabled=true#progressive_web_app/enabled=false#' export_presets.cfg
